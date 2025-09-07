@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Bet #{{ bet.id }} - Bet Ledger{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h2 class="text-2xl font-bold">Bet #{{ bet.id }}</h2>
+                <p class="text-gray-600">${{ "%.2f"|format(bet.stake_cents/100) }} • {{ bet.status.value.title() }}</p>
+                <p class="text-sm text-gray-500">Placed: {{ bet.placed_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                {% if bet.settled_at %}
+                <p class="text-sm text-gray-500">Settled: {{ bet.settled_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                {% endif %}
+            </div>
+            <div class="text-right">
+                <span class="px-3 py-1 rounded-full text-sm font-medium
+                    {% if bet.status.value == 'open' %}bg-yellow-100 text-yellow-800
+                    {% elif bet.status.value == 'won' %}bg-green-100 text-green-800
+                    {% elif bet.status.value == 'lost' %}bg-red-100 text-red-800
+                    {% elif bet.status.value == 'void' %}bg-gray-100 text-gray-800
+                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                    {{ bet.status.value.title() }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Participants -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold mb-4">Participants</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for participant in participants %}
+                <div class="border rounded-lg p-4 bg-blue-50">
+                    <h4 class="font-semibold">{{ participant.person.name }}</h4>
+                    <p class="text-lg">${{ "%.2f"|format(participant.stake_cents/100) }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Bet Legs -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold mb-4">Bet Legs</h3>
+            <div class="space-y-3">
+                {% for leg in legs %}
+                <div class="border rounded-lg p-4 {% if leg.result.value == 'won' %}bg-green-50 border-green-200{% elif leg.result.value == 'lost' %}bg-red-50 border-red-200{% elif leg.result.value == 'void' %}bg-gray-50 border-gray-200{% else %}bg-yellow-50 border-yellow-200{% endif %}">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-medium">{{ leg.matchup }}</p>
+                            <p class="text-sm text-gray-600">{{ leg.bet_description }}</p>
+                            <p class="text-sm text-gray-500">American Odds: {{ "{:+d}".format(leg.american_odds) }}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="px-2 py-1 rounded text-sm font-medium
+                                {% if leg.result.value == 'won' %}bg-green-200 text-green-800
+                                {% elif leg.result.value == 'lost' %}bg-red-200 text-red-800
+                                {% elif leg.result.value == 'void' %}bg-gray-200 text-gray-800
+                                {% else %}bg-yellow-200 text-yellow-800{% endif %}">
+                                {{ leg.result.value.title() }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Settlement Form (only for open bets) -->
+        {% if bet.status.value == 'open' %}
+        <div class="border-t pt-6">
+            <h3 class="text-lg font-semibold mb-4">Settle Bet</h3>
+            <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" class="space-y-4">
+                {% for leg in legs %}
+                <div class="flex justify-between items-center p-3 border rounded-lg">
+                    <div>
+                        <p class="font-medium">{{ leg.matchup }}</p>
+                        <p class="text-sm text-gray-600">{{ leg.bet_description }}</p>
+                        <p class="text-sm text-gray-500">{{ "{:+d}".format(leg.american_odds) }}</p>
+                    </div>
+                    <div>
+                        <select name="leg_{{ leg.id }}_result" required
+                                class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select result...</option>
+                            <option value="won">Won</option>
+                            <option value="lost">Lost</option>
+                            <option value="void">Void</option>
+                            <option value="pending">Pending/N/A</option>
+                        </select>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <div class="flex space-x-4">
+                    <button type="submit" 
+                            class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">
+                        Settle Bet
+                    </button>
+                    <a href="{{ url_for('dashboard') }}" 
+                       class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600">
+                        Back to Dashboard
+                    </a>
+                </div>
+            </form>
+        </div>
+        {% else %}
+        <div class="border-t pt-6">
+            <div class="flex space-x-4">
+                <a href="{{ url_for('dashboard') }}" 
+                   class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
+                    Back to Dashboard
+                </a>
+                <a href="{{ url_for('history') }}" 
+                   class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600">
+                    View History
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

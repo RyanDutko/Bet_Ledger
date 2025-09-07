@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}New Bet - Bet Ledger{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+        <h2 class="text-xl md:text-2xl font-bold mb-4 md:mb-6">Create New Bet</h2>
+        
+        <form method="POST" class="space-y-6">
+            <!-- Participants Section -->
+            <div>
+                <h3 class="text-base md:text-lg font-semibold mb-3 md:mb-4">Participants & Stakes</h3>
+                <div class="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4">
+                    {% for person in persons %}
+                    <div class="border rounded-lg p-3 md:p-4">
+                        <label for="person_{{ person.id }}_stake" class="block text-xs md:text-sm font-medium text-gray-700 mb-2">
+                            {{ person.name }}'s Stake ($)
+                        </label>
+                        <input type="number" 
+                               name="person_{{ person.id }}_stake" 
+                               id="person_{{ person.id }}_stake" 
+                               step="0.01" 
+                               min="0" 
+                               value="0"
+                               class="w-full border border-gray-300 rounded-md px-2 md:px-3 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               hx-post="/bet/preview" 
+                               hx-target="#preview" 
+                               hx-trigger="input delay:500ms"
+                               hx-include="[name^='leg_'], [name^='person_']">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Bet Legs -->
+            <div>
+                <div class="flex justify-between items-center mb-3 md:mb-4">
+                    <h3 class="text-base md:text-lg font-semibold">Bet Legs</h3>
+                    <button type="button" onclick="addLeg()" 
+                            class="bg-green-500 text-white px-3 md:px-4 py-2 rounded text-sm md:text-base hover:bg-green-600">
+                        Add Leg
+                    </button>
+                </div>
+                
+                <div id="legs-container" class="space-y-4">
+                    <!-- Legs will be added here dynamically -->
+                </div>
+                
+                <input type="hidden" name="leg_count" id="leg_count" value="0">
+            </div>
+
+            <!-- Preview -->
+            <div id="preview" class="bg-gray-50 rounded-lg p-4">
+                <h4 class="font-semibold mb-2">Potential Payout Preview</h4>
+                <p class="text-lg">Enter stakes and odds to see potential payout</p>
+            </div>
+
+            <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
+                <button type="submit" 
+                        class="bg-blue-500 text-white px-4 md:px-6 py-2 rounded text-sm md:text-base hover:bg-blue-600">
+                    Create Bet
+                </button>
+                <a href="{{ url_for('dashboard') }}" 
+                   class="bg-gray-500 text-white px-4 md:px-6 py-2 rounded text-sm md:text-base hover:bg-gray-600 text-center">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let legCount = 0;
+
+function addLeg() {
+    const container = document.getElementById('legs-container');
+    const legDiv = document.createElement('div');
+    legDiv.className = 'border rounded-lg p-3 md:p-4 bg-gray-50';
+    legDiv.innerHTML = `
+        <div class="space-y-3 md:space-y-0 md:grid md:grid-cols-4 md:gap-4">
+            <div>
+                <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Matchup</label>
+                <input type="text" name="leg_${legCount}_matchup" 
+                       class="w-full border border-gray-300 rounded-md px-2 md:px-3 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="e.g., PHI Eagles vs DAL Cowboys">
+            </div>
+            <div>
+                <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Bet</label>
+                <input type="text" name="leg_${legCount}_bet" 
+                       class="w-full border border-gray-300 rounded-md px-2 md:px-3 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="e.g., PHI Eagles -6.5">
+            </div>
+            <div>
+                <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">American Odds</label>
+                <input type="number" name="leg_${legCount}_odds" 
+                       class="w-full border border-gray-300 rounded-md px-2 md:px-3 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="+150 or -200"
+                       hx-post="/bet/preview" 
+                       hx-target="#preview" 
+                       hx-trigger="input delay:500ms"
+                       hx-include="[name^='leg_'], [name^='person_']">
+            </div>
+            <div class="flex items-end">
+                <button type="button" onclick="removeLeg(this)" 
+                        class="bg-red-500 text-white px-3 py-2 rounded text-sm md:text-base hover:bg-red-600 w-full md:w-auto">
+                    Remove
+                </button>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(legDiv);
+    legCount++;
+    document.getElementById('leg_count').value = legCount;
+    
+    // Update preview after adding leg
+    updatePreview();
+}
+
+function removeLeg(button) {
+    button.closest('div').remove();
+    legCount--;
+    document.getElementById('leg_count').value = legCount;
+    
+    // Update preview
+    htmx.trigger(document.querySelector('[name^="person_"]'), 'input');
+}
+
+// Update preview when leg count changes
+function updatePreview() {
+    htmx.trigger(document.querySelector('[name^="person_"]'), 'input');
+}
+
+// Add first leg on page load
+document.addEventListener('DOMContentLoaded', function() {
+    addLeg();
+});
+</script>
+{% endblock %}

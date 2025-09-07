@@ -1,0 +1,13 @@
+<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+    <h4 class="font-semibold">Potential Payout</h4>
+    <p class="text-xl font-bold">${{ "%.2f"|format(potential_payout_dollars) }}</p>
+    <p class="text-sm">Based on current stake and odds</p>
+    
+    {% if total_american_odds %}
+    <div class="mt-3 pt-3 border-t border-green-300">
+        <h5 class="font-semibold text-sm">Total American Odds</h5>
+        <p class="text-lg font-bold">{{ "{:+d}".format(total_american_odds) }}</p>
+        <p class="text-xs">Combined parlay odds</p>
+    </div>
+    {% endif %}
+</div>

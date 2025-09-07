@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bet Ledger{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <h1 class="text-2xl font-bold">
+                    <a href="{{ url_for('dashboard') }}" class="hover:text-blue-200">Bet Ledger</a>
+                </h1>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex space-x-4">
+                    <a href="{{ url_for('dashboard') }}" class="hover:text-blue-200">Dashboard</a>
+                    <a href="{{ url_for('new_bet') }}" class="hover:text-blue-200">New Bet</a>
+                    <a href="{{ url_for('new_transaction') }}" class="hover:text-blue-200">Transaction</a>
+                    <a href="{{ url_for('people') }}" class="hover:text-blue-200">People</a>
+                    <a href="{{ url_for('history') }}" class="hover:text-blue-200">History</a>
+                </div>
+                
+                <!-- Mobile Hamburger Button -->
+                <button id="mobile-menu-button" class="md:hidden p-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Mobile Navigation Menu -->
+            <div id="mobile-menu" class="hidden md:hidden pb-4">
+                <div class="flex flex-col space-y-2">
+                    <a href="{{ url_for('dashboard') }}" class="block px-3 py-2 rounded-md hover:bg-blue-700">Dashboard</a>
+                    <a href="{{ url_for('new_bet') }}" class="block px-3 py-2 rounded-md hover:bg-blue-700">New Bet</a>
+                    <a href="{{ url_for('new_transaction') }}" class="block px-3 py-2 rounded-md hover:bg-blue-700">Transaction</a>
+                    <a href="{{ url_for('people') }}" class="block px-3 py-2 rounded-md hover:bg-blue-700">People</a>
+                    <a href="{{ url_for('history') }}" class="block px-3 py-2 rounded-md hover:bg-blue-700">History</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded-md {% if category == 'success' %}bg-green-100 text-green-800{% elif category == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>

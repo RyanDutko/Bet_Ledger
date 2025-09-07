@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Bet Ledger{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Live Money Summary -->
+    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+        <h2 class="text-xl md:text-2xl font-bold mb-4">Live Money Summary</h2>
+        <div class="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4">
+            {% for data in ownership_data %}
+            <div class="border rounded-lg p-3 md:p-4 {% if data.live_money_cents >= 0 %}bg-green-50 border-green-200{% else %}bg-red-50 border-red-200{% endif %}">
+                <h3 class="font-semibold text-sm md:text-lg">{{ data.person.name }}</h3>
+                <p class="text-lg md:text-2xl font-bold {% if data.live_money_cents >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    ${{ "%.2f"|format(data.live_money_dollars) }}
+                </p>
+                <div class="text-xs md:text-sm text-gray-600 mt-1 md:mt-2">
+                    <p>Total: ${{ "%.2f"|format(data.ownership_dollars) }}</p>
+                    <p>Exposure: ${{ "%.2f"|format(data.exposure_dollars) }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Open Bets -->
+    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+        <h2 class="text-xl md:text-2xl font-bold mb-4">Open Bets</h2>
+        {% if open_bets_data %}
+        <div class="space-y-4">
+            {% for data in open_bets_data %}
+            <div class="border rounded-lg p-4 bg-gray-50">
+                <!-- Bet Header -->
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex-1">
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            {% for participant in data.participants %}
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                                {{ participant.person.name }}: ${{ "%.2f"|format(participant.stake_cents/100) }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            Total Stake: <span class="font-semibold">${{ "%.2f"|format(data.total_stake_dollars) }}</span>
+                        </div>
+                    </div>
+                    <div class="text-right ml-4">
+                        {% if data.participants|length > 1 %}
+                        <!-- Multiple participants - show individual payouts -->
+                        <div class="text-sm">
+                            {% for participant in data.participants %}
+                            <div class="text-green-600 font-semibold">
+                                {{ participant.person.name }}: ${{ "%.2f"|format((participant.stake_cents / data.total_stake_cents) * data.potential_payout_dollars) }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">Individual Potential</div>
+                        {% else %}
+                        <!-- Single participant - show total payout -->
+                        <div class="text-lg font-bold text-green-600">
+                            ${{ "%.2f"|format(data.potential_payout_dollars) }}
+                        </div>
+                        <div class="text-xs text-gray-500">Potential</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Collapsible Legs -->
+                <div class="mb-3">
+                    <button onclick="toggleLegs({{ data.bet.id }})" 
+                            class="flex items-center justify-between w-full text-left text-sm font-medium text-gray-700 hover:text-gray-900">
+                        <span>Bet Legs ({{ data.legs|length }})</span>
+                        <svg id="arrow-{{ data.bet.id }}" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div id="legs-{{ data.bet.id }}" class="hidden mt-2 space-y-2">
+                        {% for leg in data.legs %}
+                        <div class="bg-white rounded p-3 border-l-4 border-blue-400">
+                            <div class="font-medium text-sm">{{ leg.matchup }}</div>
+                            <div class="text-sm text-gray-600">{{ leg.bet_description }}</div>
+                            <div class="text-xs text-gray-500 mt-1">{{ "{:+d}".format(leg.american_odds) }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Action Button -->
+                <div class="flex justify-end">
+                    <a href="{{ url_for('bet_detail', bet_id=data.bet.id) }}" 
+                       class="bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600">
+                        View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-600 text-center py-8">No open bets</p>
+        {% endif %}
+    </div>
+
+    <script>
+        function toggleLegs(betId) {
+            const legsDiv = document.getElementById('legs-' + betId);
+            const arrow = document.getElementById('arrow-' + betId);
+            
+            if (legsDiv.classList.contains('hidden')) {
+                legsDiv.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                legsDiv.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+    </script>
+</div>
+{% endblock %}
