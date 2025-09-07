@@ -14,6 +14,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 # Handle both SQLite (local) and PostgreSQL (Render)
 database_url = os.environ.get('DATABASE_URL')
+print(f"DATABASE_URL environment variable: {database_url}")
+
 if database_url:
     # Render provides PostgreSQL
     if database_url.startswith('postgres://'):
