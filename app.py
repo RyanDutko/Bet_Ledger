@@ -19,9 +19,11 @@ if database_url:
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(f"Using PostgreSQL database: {database_url[:20]}...")
 else:
     # Local development with SQLite
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bet_ledger.db'
+    print("Using SQLite database for local development")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize db with app
@@ -463,12 +465,18 @@ def normalize_enums(flask_app: Flask) -> None:
             # Ignore silently; DB may already be clean or tables absent
 
 
-if __name__ == '__main__':
+# Initialize database when app starts (for production)
+with app.app_context():
     from db import init_db, seed_db
+    print("Initializing database...")
     init_db(app)
+    print("Seeding database...")
     seed_db(app)
+    print("Normalizing enums...")
     normalize_enums(app)
-    
+    print("Database initialization complete!")
+
+if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_ENV') == 'development'
     app.run(host='0.0.0.0', port=port, debug=debug)
